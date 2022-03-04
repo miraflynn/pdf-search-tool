@@ -1,0 +1,139 @@
+---
+title: "PDF Search Experimentation"
+author: "Mira Flynn"
+date: "3/4/2022"
+output: 
+  github_document:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(pdftools)
+```
+
+```{r}
+# Load single PDF for testing
+pdf_filename <- "pdf-files/Alcala 1962.pdf"
+pdf_text <- pdf_text(pdf_filename)
+```
+
+
+```{r}
+# Load CSV of species names
+csv_filename <- "sample_species_names.csv"
+species_names <- read.csv(csv_filename)$Species
+```
+
+```{r}
+
+# For each page in the PDF, for each species, see if the genus and species
+# both appear in the page. If they do, add to the found_species list
+found_species <- c()
+for(page in pdf_text){
+  for(fullname in species_names){
+    split = strsplit(fullname, " ")
+    genus = split[[1]][1]
+    species = split[[1]][2]
+    if(grepl(genus, page, ignore.case = TRUE) && grepl(species, page, ignore.case = TRUE)){
+      found_species <- c(found_species, fullname)
+    }
+  }
+}
+found_species <- found_species %>% unique()
+found_species
+```
+
+```{r}
+# Functionized version of above
+
+find_species <- function(filename){
+  pdf_text <- pdf_text(filename)
+  found_species <- c()
+  for(page in pdf_text){
+    for(fullname in species_names){
+      split = strsplit(fullname, " ")
+      genus = split[[1]][1]
+      species = split[[1]][2]
+      if(grepl(genus, page, ignore.case = TRUE) && grepl(species, page, ignore.case = TRUE)){
+        found_species <- c(found_species, fullname)
+      }
+    }
+  }
+  found_species <- found_species %>% unique()
+  return(found_species)
+}
+```
+
+
+```{r}
+# Load all filenames
+files <- list.files("pdf-files", pattern="*.pdf") %>% 
+  tibble() %>%
+  rename(
+    "Filename" = "."
+  )
+
+
+# Apply the find_species function on all filenames, and put it as a new
+# column in the files dataframe
+files["Found Species"] <- paste("pdf-files", files$Filename, sep = "/") %>%
+  lapply(find_species) %>%
+  tibble() %>%
+  rename(
+    "Found Species" = "."
+  )
+```
+
+
+```{r}
+
+# Some unholy code to output a CSV with an arbitrary number of columns
+output_filename <- "output.csv"
+
+output_rows <- c()
+for(r in 1:nrow(files)){
+  row <- files[r,]
+  # print(row[[2]])
+  output <- gsub(",","",row[[1]])
+  # output <- paste(output, row[[1]], sep = ",")
+  for(species in row[[2]][[1]]){
+    output <- paste(output, species, sep = ",")
+  }
+  output_rows <- c(output_rows,output)
+}
+write(output_rows,output_filename)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

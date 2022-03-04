@@ -37,3 +37,9 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+# Ignore all PDFs, IMGs, and the ZIP from the sample folder Jadelin gave me
+*.pdf
+*.IMG
+*.PNG
+*.ZIP
